@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Attendance System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            background: none;
+            border: none;
+            padding: 15px 25px;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn.secondary {
+            background: #6c757d;
+        }
+
+        .btn.danger {
+            background: #dc3545;
+        }
+
+        .btn.danger:hover {
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+        }
+
+        .camera-section {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        #videoElement {
+            max-width: 100%;
+            height: 300px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            object-fit: cover;
+        }
+
+        #canvas {
+            display: none;
+        }
+
+        .preview-image {
+            max-width: 300px;
+            max-height: 200px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 2px solid #e0e0e0;
+        }
+
+        .attendance-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .attendance-table th,
+        .attendance-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .attendance-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .attendance-table tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .status-present {
+            background: #28a745;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .status-absent {
+            background: #dc3545;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .known-persons-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .person-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+            position: relative;
+        }
+
+        .person-card .person-name {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .person-card .person-actions {
+            margin-top: 10px;
+        }
+
+        .person-card .btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            margin: 2px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: none;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #333;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+        }
+
+        .checkbox-group {
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .tabs {
+                flex-wrap: wrap;
+            }
+            
+            .tab {
+                flex: 1;
+                min-width: 120px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+
+            .known-persons-list {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Smart Attendance System</h1>
+            <p>Advanced Face Recognition Attendance Management</p>
+        </div>
+
+        <div class="card">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab(event, 'addPerson')">👤 Add Person</button>
+                <button class="tab" onclick="switchTab(event, 'removePerson')">🗑️ Remove Person</button>
+                <button class="tab" onclick="switchTab(event, 'viewAttendance')">📊 View Records</button>
+                <button class="tab" onclick="switchTab(event, 'dashboard')">📈 Dashboard</button>
+            </div>
+
+            <!-- Add Person Tab -->
+            <div id="addPerson" class="tab-content active">
+                <h2>Add New Person</h2>
+                <form id="addPersonForm">
+                    <div class="form-group">
+                        <label for="personName">Full Name:</label>
+                        <input type="text" id="personName" name="name" required placeholder="Enter full name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Choose Image Source:</label>
+                        <div style="margin: 10px 0;">
+                            <button type="button" class="btn secondary" onclick="toggleCamera()">📸 Use Camera</button>
+                            <button type="button" class="btn secondary" onclick="document.getElementById('fileInput').click()">📁 Upload File</button>
+                        </div>
+                        <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+                    </div>
+
+                    <div class="camera-section">
+                        <video id="videoElement" class="hidden" autoplay></video>
+                        <canvas id="canvas"></canvas>
+                        <div id="imagePreview"></div>
+                        <div id="cameraControls" class="hidden">
+                            <button type="button" class="btn" onclick="captureImage()">📷 Capture</button>
+                            <button type="button" class="btn secondary" onclick="stopCamera()">❌ Cancel</button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn">➕ Add Person</button>
+                </form>
+            </div>
+
+            <!-- Remove Person Tab -->
+            <div id="removePerson" class="tab-content">
+                <h2>Remove Person</h2>
+                <p style="color: #666; margin-bottom: 20px;">Select a person to remove from the system. You can choose to keep or delete their attendance history.</p>
+                
+                <div class="form-group">
+                    <label for="personSelect">Select Person to Remove:</label>
+                    <select id="personSelect" required>
+                        <option value="">Choose a person...</option>
+                    </select>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="removeRecords">
+                    <label for="removeRecords">Also delete all attendance records for this person</label>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <button type="button" class="btn danger" onclick="showRemoveConfirmation()">🗑️ Remove Person</button>
+                </div>
+
+                <div class="alert warning" style="margin-top: 20px;">
+                    <strong>⚠️ Warning:</strong> This action cannot be undone. The person will be removed from the face recognition system and will need to be re-registered to mark attendance again.
+                </div>
+            </div>
+
+            <!-- View Attendance Tab -->
+            <div id="viewAttendance" class="tab-content">
+                <h2>Attendance Records</h2>
+                <div style="margin-bottom: 20px;">
+                    <button class="btn" onclick="loadAttendanceData()">🔄 Refresh Records</button>
+                    <button class="btn secondary" onclick="exportAttendance()">📥 Export CSV</button>
+                </div>
+                <div id="attendanceTableContainer">
+                    <table class="attendance-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceTableBody">
+                            <tr><td colspan="4">Loading attendance data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content">
+                <h2>Dashboard</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3 id="totalPersons">0</h3>
+                        <p>Registered Persons</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="todayAttendance">0</h3>
+                        <p>Today's Attendance</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="totalRecords">0</h3>
+                        <p>Total Records</p>
+                    </div>
+                </div>
+                
+                <h3>Known Persons</h3>
+                <div id="knownPersonsList" class="known-persons-list">
+                    <div class="person-card">Loading...</div>
+                </div>
+                
+                <h3 style="margin-top: 30px;">Recent Activity</h3>
+                <div id="recentActivity">
+                    <p>Loading recent activity...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remove Confirmation Modal -->
+    <div id="removeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Person Removal</h3>
+                <span class="close" onclick="closeRemoveModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to remove <strong id="personToRemove"></strong> from the system?</p>
+                <p id="recordsWarning" class="hidden" style="color: #dc3545; margin-top: 10px;">
+                    <strong>⚠️ This will also delete all attendance records for this person!</strong>
+                </p>
+                <div style="margin-top: 20px; text-align: right;">
+                    <button class="btn secondary" onclick="closeRemoveModal()">Cancel</button>
+                    <button class="btn danger" onclick="confirmRemovePerson()">Remove Person</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStream = null;
+        let capturedImageData = null;
+
+        // Tab switching functionality
+        function switchTab(evt, tabName) {
+            var i, tabcontent, tabs;
+            
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].classList.remove("active");
+            }
+            
+            tabs = document.getElementsByClassName("tab");
+            for (i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove("active");
+            }
+            
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+
+            // Load data when switching to certain tabs
+            if (tabName === 'viewAttendance') {
+                loadAttendanceData();
+            } else if (tabName === 'dashboard') {
+                loadDashboardData();
+            } else if (tabName === 'removePerson') {
+                loadPersonsForRemoval();
+            }
+        }
+
+        // Camera functions for adding person
+        async function toggleCamera() {
+            const video = document.getElementById('videoElement');
+            const controls = document.getElementById('cameraControls');
+            
+            if (currentStream) {
+                stopCamera();
+                return;
+            }
+
+            try {
+                currentStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = currentStream;
+                video.classList.remove('hidden');
+                controls.classList.remove('hidden');
+            } catch (err) {
+                showAlert('Error accessing camera: ' + err.message, 'error');
+            }
+        }
+
+        function stopCamera() {
+            const video = document.getElementById('videoElement');
+            const controls = document.getElementById('cameraControls');
+            
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
+            video.classList.add('hidden');
+            controls.classList.add('hidden');
+        }
+
+        function captureImage() {
+            const video = document.getElementById('videoElement');
+            const canvas = document.getElementById('canvas');
+            const preview = document.getElementById('imagePreview');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            capturedImageData = canvas.toDataURL('image/jpeg');
+            
+            preview.innerHTML = `<img src="${capturedImageData}" class="preview-image" alt="Captured image">`;
+            stopCamera();
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    capturedImageData = e.target.result;
+                    document.getElementById('imagePreview').innerHTML = 
+                        `<img src="${capturedImageData}" class="preview-image" alt="Selected image">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Add person form submission
+        document.getElementById('addPersonForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('personName').value.trim();
+            if (!name) {
+                showAlert('Please enter a name', 'error');
+                return;
+            }
+
+            if (!capturedImageData) {
+                showAlert('Please capture or select an image', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('image_data', capturedImageData);
+
+            try {
+                const response = await fetch('/add_person', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert(result.message, 'success');
+                    document.getElementById('addPersonForm').reset();
+                    document.getElementById('imagePreview').innerHTML = '';
+                    capturedImageData = null;
+                    loadDashboardData(); // Refresh dashboard
+                } else {
+                    showAlert(result.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error adding person: ' + error.message, 'error');
+            }
+        });
+
+        // Remove person functions
+        async function loadPersonsForRemoval() {
+            try {
+                const response = await fetch('/get_known_persons');
+                const persons = await response.json();
+                
+                const select = document.getElementById('personSelect');
+                select.innerHTML = '<option value="">Choose a person...</option>';
+                
+                persons.forEach(person => {
+                    const option = document.createElement('option');
+                    option.value = person;
+                    option.textContent = person;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                showAlert('Error loading persons: ' + error.message, 'error');
+            }
+        }
+
+        function showRemoveConfirmation() {
+            const selectedPerson = document.getElementById('personSelect').value;
+            const removeRecords = document.getElementById('removeRecords').checked;
+            
+            if (!selectedPerson) {
+                showAlert('Please select a person to remove', 'error');
+                return;
+            }
+            
+            document.getElementById('personToRemove').textContent = selectedPerson;
+            document.getElementById('recordsWarning').classList.toggle('hidden', !removeRecords);
+            document.getElementById('removeModal').style.display = 'block';
+        }
+
+        function closeRemoveModal() {
+            document.getElementById('removeModal').style.display = 'none';
+        }
+
+        async function confirmRemovePerson() {
+            const selectedPerson = document.getElementById('personSelect').value;
+            const removeRecords = document.getElementById('removeRecords').checked;
+            
+            try {
+                const response = await fetch('/remove_person', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: selectedPerson,
+                        remove_records: removeRecords
+                    })
+                });
+                
+                const result = await response.json();
+                
+                closeRemoveModal();
+                
+                if (result.success) {
+                    showAlert(result.message, 'success');
+                    document.getElementById('personSelect').value = '';
+                    document.getElementById('removeRecords').checked = false;
+                    loadPersonsForRemoval(); // Refresh the dropdown
+                    loadDashboardData(); // Refresh dashboard
+                } else {
+                    showAlert(result.message, 'error');
+                }
+            } catch (error) {
+                closeRemoveModal();
+                showAlert('Error removing person: ' + error.message, 'error');
+            }
+        }
+
+        // Load attendance data
+        async function loadAttendanceData() {
+            try {
+                const response = await fetch('/get_attendance');
+                const data = await response.json();
+                
+                const tbody = document.getElementById('attendanceTableBody');
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4">No attendance records found</td></tr>';
+                } else {
+                    tbody.innerHTML = data.map(record => `
+                        <tr>
+                            <td>${record.Name}</td>
+                            <td>${record.Date}</td>
+                            <td>${record.Time}</td>
+                            <td><span class="status-${record.Status.toLowerCase()}">${record.Status}</span></td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                showAlert('Error loading attendance data: ' + error.message, 'error');
+            }
+        }
+
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                // Load known persons
+                const personsResponse = await fetch('/get_known_persons');
+                const persons = await personsResponse.json();
+                
+                document.getElementById('totalPersons').textContent = persons.length;
+                
+                const personsList = document.getElementById('knownPersonsList');
+                if (persons.length === 0) {
+                    personsList.innerHTML = '<div class="person-card">No persons registered yet</div>';
+                } else {
+                    personsList.innerHTML = persons.map(name => 
+                        `<div class="person-card">
+                            <div class="person-name">👤 ${name}</div>
+                            <div class="person-actions">
+                                <button class="btn danger" onclick="quickRemovePerson('${name}')">🗑️ Remove</button>
+                            </div>
+                        </div>`
+                    ).join('');
+                }
+                
+                // Load attendance data
+                const attendanceResponse = await fetch('/get_attendance');
+                const attendance = await attendanceResponse.json();
+                
+                document.getElementById('totalRecords').textContent = attendance.length;
+                
+                // Calculate today's attendance
+                const today = new Date().toISOString().split('T')[0];
+                const todayAttendance = attendance.filter(record => record.Date === today);
+                document.getElementById('todayAttendance').textContent = todayAttendance.length;
+                
+                // Show recent activity
+                const recentActivity = document.getElementById('recentActivity');
+                if (attendance.length === 0) {
+                    recentActivity.innerHTML = '<p>No recent activity</p>';
+                } else {
+                    const recent = attendance.slice(-5).reverse();
+                    recentActivity.innerHTML = recent.map(record => 
+                        `<div class="alert success">
+                            ${record.Name} marked ${record.Status.toLowerCase()} on ${record.Date} at ${record.Time}
+                        </div>`
+                    ).join('');
+                }
+                
+            } catch (error) {
+                showAlert('Error loading dashboard data: ' + error.message, 'error');
+            }
+        }
+
+        // Quick remove person from dashboard
+        async function quickRemovePerson(personName) {
+            if (!confirm(`Are you sure you want to remove ${personName} from the system?\n\nThis will keep their attendance records but remove them from face recognition.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/remove_person', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: personName,
+                        remove_records: false
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert(result.message, 'success');
+                    loadDashboardData(); // Refresh dashboard
+                } else {
+                    showAlert(result.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error removing person: ' + error.message, 'error');
+            }
+        }
+
+        // Export attendance data
+        function exportAttendance() {
+            fetch('/get_attendance')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length === 0) {
+                        showAlert('No data to export', 'error');
+                        return;
+                    }
+                    
+                    const csv = convertToCSV(data);
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'attendance_data.csv';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(error => {
+                    showAlert('Error exporting data: ' + error.message, 'error');
+                });
+        }
+
+        function convertToCSV(data) {
+            if (data.length === 0) return '';
+            
+            const headers = Object.keys(data[0]);
+            const csvHeaders = headers.join(',');
+            const csvRows = data.map(row => 
+                headers.map(header => `"${row[header] || ''}"`).join(',')
+            );
+            
+            return [csvHeaders, ...csvRows].join('\n');
+        }
+
+        // Utility functions
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert ${type}`;
+            alertDiv.textContent = message;
+            
+            // Insert at the top of the active tab
+            const activeTab = document.querySelector('.tab-content.active');
+            activeTab.insertBefore(alertDiv, activeTab.firstChild);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 5000);
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('removeModal');
+            if (event.target == modal) {
+                closeRemoveModal();
+            }
+        }
+
+        // Initialize dashboard on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardData();
+        });
+
+        // Auto-refresh dashboard every 30 seconds
+        setInterval(function() {
+            if (document.querySelector('.tab-content.active').id === 'dashboard') {
+                loadDashboardData();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
